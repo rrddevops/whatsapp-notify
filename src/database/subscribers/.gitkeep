@@ -1,0 +1,2 @@
+# Este diretório é para subscribers do TypeORM
+# Subscribers são classes que escutam eventos do TypeORM

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Bot - Painel de Controle</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🤖 WhatsApp Bot - Painel de Controle</h1>
+        </header>
+
+        <div class="tabs">
+            <button class="tab-button active" onclick="showTab('status')">Status</button>
+            <button class="tab-button" onclick="showTab('qrcode')">QR Code</button>
+            <button class="tab-button" onclick="showTab('scheduled')">Mensagens Agendadas</button>
+            <button class="tab-button" onclick="showTab('ai')">Configuração IA</button>
+            <button class="tab-button" onclick="showTab('send')">Enviar Mensagem</button>
+        </div>
+
+        <!-- Tab: Status -->
+        <div id="status-tab" class="tab-content active">
+            <div class="card">
+                <h2>Status do Sistema</h2>
+                <div id="status-info" class="status-grid">
+                    <div class="status-item">
+                        <span class="label">WhatsApp:</span>
+                        <span id="whatsapp-status" class="status-badge">Carregando...</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="label">Banco de Dados:</span>
+                        <span id="db-status" class="status-badge">Carregando...</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="label">IA:</span>
+                        <span id="ai-status" class="status-badge">Carregando...</span>
+                    </div>
+                </div>
+                <button onclick="checkStatus()" class="btn btn-primary">Atualizar Status</button>
+            </div>
+        </div>
+
+        <!-- Tab: QR Code -->
+        <div id="qrcode-tab" class="tab-content">
+            <div class="card">
+                <h2>Conectar WhatsApp</h2>
+                
+                <!-- Formulário de cadastro de número -->
+                <div id="phone-number-form" class="phone-form">
+                    <h3>Cadastrar Número do Celular</h3>
+                    <p>Antes de gerar o QR Code, cadastre o número do celular que será usado:</p>
+                    <div class="form-group">
+                        <label for="phone-number-input">Número do Celular:</label>
+                        <input type="text" id="phone-number-input" placeholder="5511999999999" maxlength="15">
+                        <small>Formato: Código do país + DDD + Número (ex: 5511999999999)</small>
+                    </div>
+                    <button type="button" id="save-phone-btn" class="btn btn-success">Cadastrar Número</button>
+                </div>
+
+                <!-- Informação do número cadastrado -->
+                <div id="phone-number-info" class="phone-info" style="display: none;">
+                    <div class="info-box">
+                        <strong>Número Cadastrado:</strong> <span id="phone-number-display"></span>
+                        <button onclick="changePhoneNumber()" class="btn btn-secondary btn-sm">Alterar</button>
+                    </div>
+                </div>
+
+                <!-- QR Code -->
+                <div id="qrcode-section" style="display: none;">
+                    <p>Escaneie o QR Code abaixo com seu WhatsApp:</p>
+                    <div id="qrcode-container">
+                        <div id="qrcode-placeholder">Carregando QR Code...</div>
+                    </div>
+                    <button onclick="loadQRCode()" class="btn btn-primary">Atualizar QR Code</button>
+                    <button onclick="startAutoRefresh()" class="btn btn-secondary" id="auto-refresh-btn">Ativar Atualização Automática</button>
+                    <button onclick="stopAutoRefresh()" class="btn btn-secondary" id="stop-refresh-btn" style="display: none;">Parar Atualização Automática</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Mensagens Agendadas -->
+        <div id="scheduled-tab" class="tab-content">
+            <div class="card">
+                <h2>Mensagens Agendadas</h2>
+                <button onclick="showScheduleForm()" class="btn btn-success">+ Nova Mensagem Agendada</button>
+                <div id="scheduled-list" class="scheduled-list">
+                    <p>Carregando mensagens...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Configuração IA -->
+        <div id="ai-tab" class="tab-content">
+            <div class="card">
+                <h2>Configuração da IA</h2>
+                <div id="ai-config-form">
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="ai-enabled" onchange="updateAIConfig()">
+                            IA Ativada
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="ai-respond-groups" onchange="updateAIConfig()">
+                            Responder em Grupos
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="ai-respond-dms" onchange="updateAIConfig()">
+                            Responder em Mensagens Diretas
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label for="ai-prompt">Prompt do Sistema:</label>
+                        <textarea id="ai-prompt" rows="4" placeholder="Digite o prompt personalizado para a IA..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="ai-allowed-groups">Grupos Permitidos (IDs separados por vírgula):</label>
+                        <input type="text" id="ai-allowed-groups" placeholder="120363123456789012@g.us, 120363987654321098@g.us">
+                        <small>Deixe vazio para permitir todos os grupos. Se preenchido, apenas estes grupos receberão respostas.</small>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="ai-use-wiki" onchange="updateAIConfig()">
+                            Usar Contexto do Wiki/Site
+                        </label>
+                    </div>
+                    <div class="form-group" id="wiki-url-group" style="display: none;">
+                        <label for="ai-wiki-url">URL do Wiki/Site:</label>
+                        <input type="url" id="ai-wiki-url" placeholder="https://exemplo.com/wiki ou https://docs.exemplo.com">
+                        <small>O bot buscará conteúdo deste site para responder perguntas dentro do contexto.</small>
+                    </div>
+                    <button onclick="saveAIConfig()" class="btn btn-primary">Salvar Configuração</button>
+                    <button onclick="toggleAI()" class="btn btn-secondary">Alternar IA</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Enviar Mensagem -->
+        <div id="send-tab" class="tab-content">
+            <div class="card">
+                <h2>Enviar Mensagem Manual</h2>
+                <form id="send-message-form" onsubmit="sendMessage(event)">
+                    <div class="form-group">
+                        <label for="message-to">Para (ID do Grupo ou Contato):</label>
+                        <input type="text" id="message-to" required placeholder="120363123456789012@g.us ou 5511999999999@c.us">
+                    </div>
+                    <div class="form-group">
+                        <label for="message-text">Mensagem:</label>
+                        <textarea id="message-text" rows="5" required placeholder="Digite sua mensagem..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Enviar Mensagem</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Modal para Nova Mensagem Agendada -->
+        <div id="schedule-modal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeScheduleForm()">&times;</span>
+                <h2>Nova Mensagem Agendada</h2>
+                <form id="schedule-form" onsubmit="createScheduledMessage(event)">
+                    <div class="form-group">
+                        <label for="schedule-group-id">ID do Grupo:</label>
+                        <input type="text" id="schedule-group-id" required placeholder="120363123456789012@g.us">
+                    </div>
+                    <div class="form-group">
+                        <label for="schedule-message">Mensagem:</label>
+                        <textarea id="schedule-message" rows="5" required placeholder="Digite a mensagem..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="schedule-datetime">Data e Hora:</label>
+                        <input type="datetime-local" id="schedule-datetime" required>
+                    </div>
+                    <button type="submit" class="btn btn-success">Agendar Mensagem</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Notificações -->
+        <div id="notification" class="notification"></div>
+    </div>
+
+    <script src="/app.js"></script>
+</body>
+</html>

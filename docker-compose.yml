@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: whatsapp_bot_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: whatsapp_bot
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  bot:
+    build: .
+    container_name: whatsapp_bot
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PORT: 3000
+      NODE_ENV: production
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_DATABASE: whatsapp_bot
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-3.5-turbo}
+      OPENAI_MAX_TOKENS: ${OPENAI_MAX_TOKENS:-500}
+      OPENAI_TEMPERATURE: ${OPENAI_TEMPERATURE:-0.7}
+      WHATSAPP_SESSION_PATH: /app/sessions
+      AI_ENABLED_BY_DEFAULT: ${AI_ENABLED_BY_DEFAULT:-false}
+      AI_RESPOND_TO_GROUPS: ${AI_RESPOND_TO_GROUPS:-true}
+      AI_RESPOND_TO_DMS: ${AI_RESPOND_TO_DMS:-true}
+      AUTO_MIGRATE: ${AUTO_MIGRATE:-true}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./sessions:/app/sessions
+      - ./logs:/app/logs
+    restart: unless-stopped
+    # Limpar locks do Chromium ao iniciar
+    entrypoint: /bin/sh -c "if [ -f /app/scripts/cleanup-locks.sh ]; then /app/scripts/cleanup-locks.sh; fi; npm start"
+
+volumes:
+  postgres_data:

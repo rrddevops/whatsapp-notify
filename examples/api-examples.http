@@ -1,0 +1,62 @@
+### Health Check
+GET http://localhost:3000/api/health
+
+### Obter Status do WhatsApp
+GET http://localhost:3000/api/whatsapp/status
+
+### Obter QR Code
+GET http://localhost:3000/api/whatsapp/qrcode
+
+### Enviar Mensagem Manual
+POST http://localhost:3000/api/whatsapp/send
+Content-Type: application/json
+
+{
+  "to": "5511999999999@c.us",
+  "message": "Olá! Esta é uma mensagem de teste."
+}
+
+### Listar todos os grupos
+GET http://localhost:3000/api/whatsapp/groups
+
+### Obter informações de um grupo a partir de um link de convite
+GET http://localhost:3000/api/whatsapp/group/invite?inviteLink=https://chat.whatsapp.com/IWQYIZuWsEWGB7HGhbr5lC
+
+### Obter informações de um grupo por ID
+GET http://localhost:3000/api/whatsapp/group/120363123456789012@g.us
+
+### Criar Mensagem Agendada
+POST http://localhost:3000/api/scheduled-messages
+Content-Type: application/json
+
+{
+  "groupId": "120363123456789012@g.us",
+  "message": "Olá grupo! Esta é uma mensagem agendada para o Natal.",
+  "scheduledAt": "2024-12-25T10:00:00Z"
+}
+
+### Listar Todas as Mensagens Agendadas
+GET http://localhost:3000/api/scheduled-messages
+
+### Listar Apenas Mensagens Pendentes
+GET http://localhost:3000/api/scheduled-messages?status=pending
+
+### Cancelar Mensagem Agendada
+DELETE http://localhost:3000/api/scheduled-messages/{id}
+
+### Obter Status da IA
+GET http://localhost:3000/api/ai/status
+
+### Atualizar Configuração da IA
+PUT http://localhost:3000/api/ai/status
+Content-Type: application/json
+
+{
+  "enabled": true,
+  "respondToGroups": true,
+  "respondToDMs": true,
+  "systemPrompt": "Você é um assistente virtual profissional e amigável. Responda de forma clara e objetiva."
+}
+
+### Alternar Status da IA (Toggle)
+POST http://localhost:3000/api/ai/toggle
