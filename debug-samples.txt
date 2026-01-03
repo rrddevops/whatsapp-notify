@@ -1,0 +1,98 @@
+﻿
+> 2026-01-02 23:54:15 [[34mdebug[39m]: Amostras de chats (primeiros 5 + especiais): [
+    {
+      "id": "120363404686530264@g.us",
+      "server": "g.us",
+      "hasNewsletterProps": []
+    },
+    {
+      "id": "120363422975723542@g.us",
+      "server": "g.us",
+      "hasNewsletterProps": []
+    },
+    {
+      "id": "559291171458@c.us",
+      "server": "c.us",
+      "hasNewsletterProps": []
+    },
+    {
+      "id": "120363299789678072@g.us",
+      "server": "g.us",
+      "name": "SmartPay <> Magnum Bank",
+      "hasNewsletterProps": []
+    },
+    {
+      "id": "5511984881477@c.us",
+      "server": "c.us",
+      "hasNewsletterProps": []
+    }
+  ] {"service":"whatsapp-bot"}
+  2026-01-02 23:54:15 [[33mwarn[39m]: Nenhum canal encontrado via acesso direto. Tentando m├®todo tradicional... {"service":"whatsapp-bot"}
+  2026-01-02 23:54:19 [[34mdebug[39m]: Chat n├úo-grupo analisado: {"service":"whatsapp-bot","id":"559291171458@c.us","name":"Marcos Lima Observabilidade Ma
+gnum","isGroup":false,"isBroadcast":false,"isChannel":false,"hasBroadcastInId":false,"isKindChannel":false,"isReadOnlyChannel":false,"isWhatsAppChannel":fals
+e,"isReadOnly":false,"availableProps":["isReadOnly"]}
+  2026-01-02 23:54:19 [[34mdebug[39m]: Chat n├úo-grupo analisado: {"service":"whatsapp-bot","id":"5511984881477@c.us","name":"Marcelo Irm├úo","isGroup":fal
+se,"isBroadcast":false,"isChannel":false,"hasBroadcastInId":false,"isKindChannel":false,"isReadOnlyChannel":false,"isWhatsAppChannel":false,"isReadOnly":fals
+e,"availableProps":["isReadOnly"]}
+  2026-01-02 23:54:19 [[34mdebug[39m]: Chat n├úo-grupo analisado: {"service":"whatsapp-bot","id":"5511943185668@c.us","name":"S├®rgio Dutra","isGroup":fals
+e,"isBroadcast":false,"isChannel":false,"hasBroadcastInId":false,"isKindChannel":false,"isReadOnlyChannel":false,"isWhatsAppChannel":false,"isReadOnly":false
+,"availableProps":["isReadOnly"]}
+  2026-01-02 23:54:19 [[34mdebug[39m]: Chat n├úo-grupo analisado: {"service":"whatsapp-bot","id":"5511942562400@c.us","name":"Ricardo S├í Empresa DBBR","is
+Group":false,"isBroadcast":false,"isChannel":false,"hasBroadcastInId":false,"isKindChannel":false,"isReadOnlyChannel":false,"isWhatsAppChannel":false,"isRead
+Only":false,"availableProps":["isReadOnly"]}
+  2026-01-02 23:54:19 [[34mdebug[39m]: Chat n├úo-grupo analisado: {"service":"whatsapp-bot","id":"5511982666451@c.us","name":"Henrique Motta Sciensa","isGr
+oup":false,"isBroadcast":false,"isChannel":false,"hasBroadcastInId":false,"isKindChannel":false,"isReadOnlyChannel":false,"isWhatsAppChannel":false,"isReadOn
+ly":false,"availableProps":["isReadOnly"]}
+  2026-01-02 23:54:19 [[34mdebug[39m]: Chat n├úo-grupo analisado: {"service":"whatsapp-bot","id":"5511984931995@c.us","name":"Bruno Magnum","isGroup":false
+,"isBroadcast":false,"isChannel":false,"hasBroadcastInId":false,"isKindChannel":false,"isReadOnlyChannel":false,"isWhatsAppChannel":false,"isReadOnly":false,
+"availableProps":["isReadOnly"]}
+  2026-01-02 23:54:19 [[34mdebug[39m]: Chat n├úo-grupo analisado: {"service":"whatsapp-bot","id":"5511964072564@c.us","name":"David BDN Presb├¡tero Nacao",
+"isGroup":false,"isBroadcast":false,"isChannel":false,"hasBroadcastInId":false,"isKindChannel":false,"isReadOnlyChannel":false,"isWhatsAppChannel":false,"isR
+eadOnly":false,"availableProps":["isReadOnly"]}
+  2026-01-02 23:54:19 [[34mdebug[39m]: Chat n├úo-grupo analisado: {"service":"whatsapp-bot","id":"5511970773596@c.us","name":"Juliana Celula","isGroup":fal
+se,"isBroadcast":false,"isChannel":false,"hasBroadcastInId":false,"isKindChannel":false,"isReadOnlyChannel":false,"isWhatsAppChannel":false,"isReadOnly":fals
+e,"availableProps":["isReadOnly"]}
+  2026-01-02 23:54:19 [[34mdebug[39m]: Chat n├úo-grupo analisado: {"service":"whatsapp-bot","id":"5511975184978@c.us","name":"Mae Odete","isGroup":false,"i
+sBroadcast":false,"isChannel":false,"hasBroadcastInId":false,"isKindChannel":false,"isReadOnlyChannel":false,"isWhatsAppChannel":false,"isReadOnly":false,"av
+ailableProps":["isReadOnly"]}
+  2026-01-02 23:54:19 [[34mdebug[39m]: Chat n├úo-grupo analisado: {"service":"whatsapp-bot","id":"5511960759812@c.us","name":"Douglas Assist├¬ncia Bdn","is
+Group":false,"isBroadcast":false,"isChannel":false,"hasBroadcastInId":false,"isKindChannel":false,"isReadOnlyChannel":false,"isWhatsAppChannel":false,"isRead
+Only":false,"availableProps":["isReadOnly"]}
+  2026-01-02 23:54:19 [[34mdebug[39m]: Chat n├úo-grupo analisado: {"service":"whatsapp-bot","id":"5511992709199@c.us","name":"Rodrigo Meu N├║mero","isGroup
+":false,"isBroadcast":false,"isChannel":false,"hasBroadcastInId":false,"isKindChannel":false,"isReadOnlyChannel":false,"isWhatsAppChannel":false,"isReadOnly"
+:false,"availableProps":["isReadOnly"]}
+  2026-01-02 23:54:19 [[34mdebug[39m]: Chat n├úo-grupo analisado: {"service":"whatsapp-bot","id":"5511997757515@c.us","name":"Amor","isGroup":false,"isBroa
+dcast":false,"isChannel":false,"hasBroadcastInId":false,"isKindChannel":false,"isReadOnlyChannel":false,"isWhatsAppChannel":false,"isReadOnly":false,"availab
+leProps":["isReadOnly"]}
+  2026-01-02 23:54:19 [[34mdebug[39m]: Chat n├úo-grupo analisado: {"service":"whatsapp-bot","id":"5511966702506@c.us","name":"Vinicius Tercont","isGroup":f
+alse,"isBroadcast":false,"isChannel":false,"hasBroadcastInId":false,"isKindChannel":false,"isReadOnlyChannel":false,"isWhatsAppChannel":false,"isReadOnly":fa
+lse,"availableProps":["isReadOnly"]}
+  2026-01-02 23:54:19 [[34mdebug[39m]: Chat n├úo-grupo analisado: {"service":"whatsapp-bot","id":"551123912407@c.us","name":"+55 11 2391-2407","isGroup":fa
+lse,"isBroadcast":false,"isChannel":false,"hasBroadcastInId":false,"isKindChannel":false,"isReadOnlyChannel":false,"isWhatsAppChannel":false,"isReadOnly":fal
+se,"availableProps":["isReadOnly"]}
+  2026-01-02 23:54:19 [[34mdebug[39m]: Chat n├úo-grupo analisado: {"service":"whatsapp-bot","id":"5511989895806@c.us","name":"Claudio Mgn","isGroup":false,
+"isBroadcast":false,"isChannel":false,"hasBroadcastInId":false,"isKindChannel":false,"isReadOnlyChannel":false,"isWhatsAppChannel":false,"isReadOnly":false,"
+availableProps":["isReadOnly"]}
+  2026-01-02 23:54:19 [[34mdebug[39m]: Chat n├úo-grupo analisado: {"service":"whatsapp-bot","id":"5511984203491@c.us","name":"Nelson Zanardi Mgn","isGroup"
+:false,"isBroadcast":false,"isChannel":false,"hasBroadcastInId":false,"isKindChannel":false,"isReadOnlyChannel":false,"isWhatsAppChannel":false,"isReadOnly":
+false,"availableProps":["isReadOnly"]}
+  2026-01-02 23:54:19 [[34mdebug[39m]: Chat n├úo-grupo analisado: {"service":"whatsapp-bot","id":"5511999537865@c.us","name":"Rafael Riqueto","isGroup":fal
+se,"isBroadcast":false,"isChannel":false,"hasBroadcastInId":false,"isKindChannel":false,"isReadOnlyChannel":false,"isWhatsAppChannel":false,"isReadOnly":fals
+e,"availableProps":["isReadOnly"]}
+  2026-01-02 23:54:19 [[34mdebug[39m]: Chat n├úo-grupo analisado: {"service":"whatsapp-bot","id":"5511985907206@c.us","name":"Paulo Magnum","isGroup":false
+,"isBroadcast":false,"isChannel":false,"hasBroadcastInId":false,"isKindChannel":false,"isReadOnlyChannel":false,"isWhatsAppChannel":false,"isReadOnly":false,
+"availableProps":["isReadOnly"]}
+  2026-01-02 23:54:19 [[34mdebug[39m]: Chat n├úo-grupo analisado: {"service":"whatsapp-bot","id":"5511959501576@c.us","name":"ƒà╣ƒà¥ƒåüƒàÂƒà©ƒà¢ƒàÀƒà¥ 
+Jorge Amigo","isGroup":false,"isBroadcast":false,"isChannel":false,"hasBroadcastInId":false,"isKindChannel":false,"isReadOnlyChannel":false,"isWhatsAppChanne
+l":false,"isReadOnly":false,"availableProps":["isReadOnly"]}
+  2026-01-02 23:54:19 [[34mdebug[39m]: Chat n├úo-grupo analisado: {"service":"whatsapp-bot","id":"5511976447907@c.us","name":"Fl├ívio Do Jiu","isGroup":fal
+se,"isBroadcast":false,"isChannel":false,"hasBroadcastInId":false,"isKindChannel":false,"isReadOnlyChannel":false,"isWhatsAppChannel":false,"isReadOnly":fals
+e,"availableProps":["isReadOnly"]}
+  2026-01-02 23:54:19 [[34mdebug[39m]: Chat n├úo-grupo analisado: {"service":"whatsapp-bot","id":"189769573265452@lid","name":"+55 19 4042-8785","isGroup":
+false,"isBroadcast":false,"isChannel":false,"hasBroadcastInId":false,"isKindChannel":false,"isReadOnlyChannel":false,"isWhatsAppChannel":false,"isReadOnly":f
+alse,"availableProps":["isReadOnly"]}
+  2026-01-02 23:54:19 [[34mdebug[39m]: Chat n├úo-grupo analisado: {"service":"whatsapp-bot","id":"5511969091044@c.us","name":"Roberto Graziano","isGroup":f
+alse,"isBroadcast":false,"isChannel":false,"hasBroadcastInId":false,"isKindChannel":false,"isReadOnlyChannel":false,"isWhatsAppChannel":false,"isReadOnly":fa
+lse,"availableProps":["isReadOnly"]}
+
+

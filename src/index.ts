@@ -2,8 +2,10 @@ import 'reflect-metadata';
 import dotenv from 'dotenv';
 import express from 'express';
 import cors from 'cors';
+import swaggerUi from 'swagger-ui-express';
 import { AppDataSource } from './config/database';
 import { logger } from './config/logger';
+import { swaggerSpec } from './config/swagger';
 import { WhatsAppService } from './services/WhatsAppService';
 import { ChatGPTService } from './services/ChatGPTService';
 import { SchedulerService } from './services/SchedulerService';
@@ -132,6 +134,12 @@ async function bootstrap() {
     const aiController = new AIController(chatGPTService);
     const whatsappController = new WhatsAppController(whatsappService);
 
+    // Configurar Swagger UI
+    app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+      customCss: '.swagger-ui .topbar { display: none }',
+      customSiteTitle: 'WhatsApp Bot API Documentation',
+    }));
+
     app.use('/api', setupRoutes(scheduledMessageController, aiController, whatsappController));
 
     // INICIAR SERVIDOR HTTP PRIMEIRO (crítico - antes de qualquer inicialização pesada)
@@ -141,6 +149,7 @@ async function bootstrap() {
       logger.info(`🌐 Frontend disponível em http://localhost:${PORT}`);
       logger.info(`📡 API disponível em http://localhost:${PORT}/api`);
       logger.info(`📱 QR Code disponível em http://localhost:${PORT}/api/whatsapp/qrcode`);
+      logger.info(`📚 Swagger UI disponível em http://localhost:${PORT}/api-docs`);
     });
 
     // Registrar handler de mensagens

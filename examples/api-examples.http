@@ -1,6 +1,9 @@
 ### Health Check
 GET http://localhost:3000/api/health
 
+#Swagger
+http://localhost:3000/api-docs
+
 ### Obter Status do WhatsApp
 GET http://localhost:3000/api/whatsapp/status
 
@@ -19,11 +22,18 @@ Content-Type: application/json
 ### Listar todos os grupos
 GET http://localhost:3000/api/whatsapp/groups
 
+### Listar todos os canais
+GET http://localhost:3000/api/whatsapp/channels
+
 ### Obter informações de um grupo a partir de um link de convite
 GET http://localhost:3000/api/whatsapp/group/invite?inviteLink=https://chat.whatsapp.com/IWQYIZuWsEWGB7HGhbr5lC
 
 ### Obter informações de um grupo por ID
 GET http://localhost:3000/api/whatsapp/group/120363123456789012@g.us
+
+#Canais
+http://localhost:3000/api/whatsapp/channels
+http://localhost:3000/api/whatsapp/channel/link?channelLink=https%3A%2F%2Fwhatsapp.com%2Fchannel%2F0029Vb71zdE8kyyQkV8hOL2Q
 
 ### Criar Mensagem Agendada
 POST http://localhost:3000/api/scheduled-messages

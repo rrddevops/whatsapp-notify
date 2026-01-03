@@ -488,6 +488,397 @@ export class WhatsAppService {
     }
   }
 
+  public async getChannels(): Promise<any[]> {
+    if (!this.client || !this.isReady) {
+      throw new Error('WhatsApp não está conectado');
+    }
+
+    try {
+      // Primeiro, tentar método direto (mais confiável para canais)
+      logger.info('Tentando obter canais via acesso direto ao Store...');
+      const directChannels = await this.getChannelsDirect();
+      
+      if (directChannels && directChannels.length > 0) {
+        logger.info(`Encontrados ${directChannels.length} canais via acesso direto`);
+        return directChannels;
+      }
+      
+      logger.warn('Nenhum canal encontrado via acesso direto. Tentando método tradicional...');
+      
+      // Fallback: método tradicional via whatsapp-web.js
+      const chats = await this.client.getChats();
+      
+      // Filtrar canais: verificar múltiplas propriedades para identificar canais
+      // Canais no WhatsApp podem ser identificados através de diferentes propriedades
+      const channels = chats.filter(chat => {
+        const chatAny = chat as any;
+        const chatId = chat.id._serialized;
+        
+        // Excluir grupos explícitos
+        if (chat.isGroup) {
+          return false;
+        }
+        
+        // Excluir status@broadcast que é uma lista de transmissão especial do sistema
+        if (chatId === 'status@broadcast') {
+          return false;
+        }
+        
+        // Verificar se é um canal através de diferentes propriedades:
+        // 1. Propriedade isBroadcast (listas de transmissão) - mas não incluir status@broadcast
+        // 2. Propriedade isChannel (canais do WhatsApp Channels)
+        // 3. ID contendo @broadcast (mas não status@broadcast)
+        // 4. Tipo/kind específico
+        // 5. Propriedades específicas do WhatsApp Web para canais
+        
+        // Verificar propriedade isChannel diretamente
+        const isChannel = chatAny.isChannel === true;
+        
+        // Verificar propriedade isBroadcast
+        const isBroadcast = chatAny.isBroadcast === true;
+        
+        // Verificar ID contendo broadcast (mas não status@broadcast)
+        const hasBroadcastInId = (chatId.includes('@broadcast') || chatId.includes('broadcast')) && chatId !== 'status@broadcast';
+        
+        // Verificar tipo/kind
+        const isKindChannel = chatAny.kind === 'broadcast' || chatAny.kind === 'channel';
+        
+        // Verificar se é read-only (canais são read-only)
+        const isReadOnlyChannel = chatAny.isReadOnly === true;
+        
+        // Verificar propriedades internas do WhatsApp Web para canais reais
+        const hasChannelProperties = 
+          chatAny.isNewsletter === true ||
+          chatAny.isNewsletterChannel === true ||
+          (chatAny.contact && chatAny.contact.isBusiness === true);
+        
+        // Verificar se tem propriedades específicas de canal do WhatsApp Channels
+        const isWhatsAppChannel = 
+          chatAny.channelInfo !== undefined ||
+          (chatAny.contact && (chatAny.contact as any).isChannel === true) ||
+          chatAny.isChannel === true;
+        
+        // Verificar através de propriedades do objeto interno do WhatsApp
+        // Canais geralmente têm algumas características específicas
+        const hasInternalChannelProps = 
+          (chatAny.isReadOnly === true && !chat.isGroup) ||
+          (chatAny.contact && (chatAny.contact as any).isChannel === true);
+        
+        const result = isBroadcast || isChannel || hasBroadcastInId || isKindChannel || isReadOnlyChannel || hasChannelProperties || isWhatsAppChannel || hasInternalChannelProps;
+        
+        // Log para debug de todos os chats não-grupo que podem ser canais
+        if (!chat.isGroup && chatId !== 'status@broadcast') {
+          logger.debug('Chat não-grupo analisado:', {
+            id: chatId,
+            name: chat.name || 'Sem nome',
+            isGroup: chat.isGroup,
+            isBroadcast,
+            isChannel,
+            hasBroadcastInId,
+            isKindChannel,
+            isReadOnlyChannel,
+            hasChannelProperties,
+            isWhatsAppChannel,
+            hasInternalChannelProps,
+            kind: chatAny.kind,
+            isReadOnly: chatAny.isReadOnly,
+            chatIsChannel: chatAny.isChannel,
+            result: result,
+            // Log de todas as propriedades disponíveis para debug
+            availableProps: Object.keys(chatAny).filter(key => 
+              key.includes('channel') || 
+              key.includes('Channel') || 
+              key.includes('broadcast') || 
+              key.includes('Broadcast') ||
+              key === 'kind' ||
+              key === 'isReadOnly'
+            ),
+          });
+        }
+        
+        return result;
+      });
+      
+      const channelsInfo = await Promise.all(
+        channels.map(async (channel) => {
+          try {
+            const channelAny = channel as any;
+            let subscribersCount = 0;
+            let channelName = 'Canal sem nome';
+            let channelDescription = '';
+            
+            // Tentar obter nome do canal através de diferentes propriedades
+            try {
+              // Tentar diferentes propriedades para obter o nome
+              channelName = 
+                channel.name || 
+                channelAny.name || 
+                channelAny.subject || 
+                channelAny.title ||
+                channelAny.pushname ||
+                channelAny.formattedTitle ||
+                (channelAny.channelInfo && channelAny.channelInfo.name) ||
+                (channelAny.contact && (channelAny.contact as any).pushname) ||
+                (channelAny.contact && (channelAny.contact as any).name) ||
+                (channelAny.contact && (channelAny.contact as any).formattedName) ||
+                'Canal sem nome';
+              
+              // Se ainda não tiver nome, tentar obter do contato
+              if (channelName === 'Canal sem nome' || !channelName) {
+                try {
+                  const contact = await channel.getContact();
+                  // Usar apenas propriedades válidas do tipo Contact (pushname e name)
+                  channelName = contact.pushname || contact.name || channelName;
+                  
+                  // Se ainda não tiver nome, tentar obter através de propriedades internas
+                  if (channelName === 'Canal sem nome' || !channelName) {
+                    const contactAny = contact as any;
+                    channelName = contactAny.formattedTitle || contactAny.formattedName || contactAny.shortName || contactAny.displayName || channelName;
+                  }
+                } catch (contactError) {
+                  // Ignorar erro ao obter contato
+                  logger.debug('Erro ao obter contato do canal:', contactError);
+                }
+              }
+              
+              // Log detalhado para debug
+              logger.debug('Informações do canal:', {
+                id: channel.id._serialized,
+                name: channelName,
+                channelName: channel.name,
+                channelAnyName: channelAny.name,
+                channelAnySubject: channelAny.subject,
+                channelAnyTitle: channelAny.title,
+                hasChannelInfo: !!channelAny.channelInfo,
+                channelInfoName: channelAny.channelInfo?.name,
+                hasContact: !!channelAny.contact,
+              });
+            } catch (nameError) {
+              logger.debug('Erro ao obter nome do canal:', nameError);
+            }
+            
+            // Tentar obter descrição através de diferentes propriedades
+            try {
+              channelDescription = 
+                channelAny.description || 
+                channelAny.desc || 
+                channelAny.about ||
+                (channelAny.channelInfo && channelAny.channelInfo.description) ||
+                '';
+              
+              // Tentar obter descrição através de métodos específicos
+              if (!channelDescription && channelAny.getDescription) {
+                try {
+                  channelDescription = await channelAny.getDescription();
+                } catch (descError) {
+                  // Ignorar erro
+                }
+              }
+              
+              // Tentar obter descrição do contato se disponível
+              if (!channelDescription) {
+                try {
+                  const contact = await channel.getContact();
+                  const contactAny = contact as any;
+                  channelDescription = contactAny.about || contactAny.description || '';
+                } catch (contactDescError) {
+                  // Ignorar erro
+                }
+              }
+            } catch (descError) {
+              logger.debug('Erro ao obter descrição do canal:', descError);
+            }
+            
+            // Tentar obter número de assinantes/subscribers através de diferentes métodos
+            try {
+              if (channelAny.participants) {
+                const participants = await channelAny.participants;
+                subscribersCount = Array.isArray(participants) ? participants.length : 0;
+              } else if (channelAny.subscribers) {
+                const subscribers = await channelAny.subscribers;
+                subscribersCount = Array.isArray(subscribers) ? subscribers.length : 0;
+              } else if (channelAny.subscribersCount !== undefined) {
+                subscribersCount = channelAny.subscribersCount;
+              } else if (channelAny.participantsCount !== undefined) {
+                subscribersCount = channelAny.participantsCount;
+              }
+            } catch (err) {
+              // Ignorar erro ao obter subscribers - não é crítico
+              logger.debug('Não foi possível obter número de subscribers do canal:', channel.id._serialized);
+            }
+            
+            return {
+              id: channel.id._serialized,
+              name: channelName,
+              description: channelDescription,
+              subscribersCount: subscribersCount,
+              isChannel: true,
+              isBroadcast: channelAny.isBroadcast || false,
+            };
+          } catch (err) {
+            // Se falhar ao obter informações detalhadas, retornar informações básicas
+            logger.warn('Erro ao obter informações detalhadas do canal:', err);
+            const channelAny = channel as any;
+            return {
+              id: channel.id._serialized,
+              name: channel.name || channelAny.name || channelAny.subject || 'Canal sem nome',
+              description: channelAny.description || channelAny.desc || '',
+              subscribersCount: 0,
+              isChannel: true,
+              isBroadcast: channelAny.isBroadcast || false,
+            };
+          }
+        })
+      );
+      
+      logger.info(`Encontrados ${channelsInfo.length} canais`);
+      
+      // Se não encontrou canais, tentar listar todos os chats para debug
+      if (channelsInfo.length === 0) {
+        logger.warn('Nenhum canal encontrado. Listando todos os chats para debug...');
+        const allChats = await this.client.getChats();
+        logger.debug('Total de chats:', allChats.length);
+        allChats.forEach((chat, index) => {
+          const chatAny = chat as any;
+          logger.debug(`Chat ${index + 1}:`, {
+            id: chat.id._serialized,
+            name: chat.name,
+            isGroup: chat.isGroup,
+            isBroadcast: chatAny.isBroadcast,
+            isChannel: chatAny.isChannel,
+            kind: chatAny.kind,
+            isReadOnly: chatAny.isReadOnly,
+          });
+        });
+      }
+      
+      return channelsInfo;
+    } catch (error) {
+      logger.error('Erro ao obter canais:', error);
+      throw error;
+    }
+  }
+
+  public async getChannelInfoFromLink(channelLink: string): Promise<any> {
+    if (!this.client || !this.isReady) {
+      throw new Error('WhatsApp não está conectado');
+    }
+
+    try {
+      // Extrair o código do link do canal
+      // Formato: https://whatsapp.com/channel/CODIGO
+      const match = channelLink.match(/whatsapp\.com\/channel\/([A-Za-z0-9]+)/);
+      if (!match || !match[1]) {
+        throw new Error('Link do canal inválido');
+      }
+
+      const channelCode = match[1];
+      
+      logger.info(`Buscando canal com código: ${channelCode}`);
+      
+      // Tentar obter informações do canal usando o código
+      // Nota: whatsapp-web.js pode não ter suporte direto para canais ainda
+      // Vamos tentar encontrar o canal na lista de chats
+      const chats = await this.client.getChats();
+      
+      // Log de todos os chats para debug
+      logger.debug(`Total de chats para buscar canal: ${chats.length}`);
+      chats.forEach((chat, index) => {
+        const chatAny = chat as any;
+        logger.debug(`Chat ${index + 1} na busca:`, {
+          id: chat.id._serialized,
+          name: chat.name,
+          isGroup: chat.isGroup,
+          includesCode: chat.id._serialized.includes(channelCode),
+        });
+      });
+      
+      const channel = chats.find(chat => {
+        const chatAny = chat as any;
+        const chatId = chat.id._serialized;
+        
+        // Verificar se o ID do chat corresponde ao código do canal
+        // Canais podem ter IDs em formatos diferentes
+        const matchesId = chatId.includes(channelCode);
+        const matchesChannelCode = chatAny.channelCode === channelCode;
+        const matchesChannelInfo = chatAny.channelInfo && chatAny.channelInfo.code === channelCode;
+        
+        if (matchesId || matchesChannelCode || matchesChannelInfo) {
+          logger.info(`Canal encontrado! ID: ${chatId}, Nome: ${chat.name}`);
+        }
+        
+        return matchesId || matchesChannelCode || matchesChannelInfo;
+      });
+
+      if (!channel) {
+        // Se não encontrou, listar todos os chats não-grupo para ajudar no debug
+        const nonGroupChats = chats.filter(chat => !chat.isGroup);
+        logger.warn(`Canal não encontrado. Total de chats não-grupo: ${nonGroupChats.length}`);
+        nonGroupChats.forEach((chat, index) => {
+          logger.debug(`Chat não-grupo ${index + 1}:`, {
+            id: chat.id._serialized,
+            name: chat.name,
+          });
+        });
+        
+        throw new Error(`Canal com código ${channelCode} não encontrado. Certifique-se de que você está inscrito no canal e que ele aparece na sua lista de conversas.`);
+      }
+
+      const channelAny = channel as any;
+      let channelName = channel.name || 'Canal sem nome';
+      let channelDescription = '';
+      let subscribersCount = 0;
+
+      // Tentar obter informações detalhadas
+      try {
+        const contact = await channel.getContact();
+        channelName = contact.pushname || contact.name || channelName;
+        const contactAny = contact as any;
+        channelDescription = contactAny.about || contactAny.description || '';
+      } catch (contactError) {
+        logger.debug('Erro ao obter informações do contato do canal:', contactError);
+      }
+
+      // Tentar obter descrição do canal
+      try {
+        channelDescription = 
+          channelAny.description || 
+          channelAny.desc || 
+          channelAny.about ||
+          (channelAny.channelInfo && channelAny.channelInfo.description) ||
+          channelDescription;
+      } catch (descError) {
+        logger.debug('Erro ao obter descrição:', descError);
+      }
+
+      // Tentar obter número de subscribers
+      try {
+        if (channelAny.subscribers) {
+          const subscribers = await channelAny.subscribers;
+          subscribersCount = Array.isArray(subscribers) ? subscribers.length : 0;
+        } else if (channelAny.subscribersCount !== undefined) {
+          subscribersCount = channelAny.subscribersCount;
+        }
+      } catch (subError) {
+        logger.debug('Erro ao obter subscribers:', subError);
+      }
+
+      return {
+        id: channel.id._serialized,
+        name: channelName,
+        description: channelDescription,
+        subscribersCount: subscribersCount,
+        channelCode: channelCode,
+        channelLink: channelLink,
+        isChannel: true,
+        isBroadcast: channelAny.isBroadcast || false,
+      };
+    } catch (error: any) {
+      logger.error('Erro ao obter informações do canal:', error);
+      throw new Error(`Erro ao obter informações do canal: ${error.message}`);
+    }
+  }
+
   public async getGroupInfoFromInviteLink(inviteLink: string): Promise<any> {
     if (!this.client || !this.isReady) {
       throw new Error('WhatsApp não está conectado');
@@ -555,6 +946,209 @@ export class WhatsAppService {
     } catch (error: any) {
       logger.error('Erro ao obter grupo por ID:', error);
       throw new Error(`Erro ao obter grupo: ${error.message}`);
+    }
+  }
+
+  /**
+   * Método alternativo para obter canais acessando diretamente o Store do WhatsApp Web
+   * Usa Puppeteer para injetar código JavaScript e acessar a API interna
+   */
+  public async getChannelsDirect(): Promise<any[]> {
+    if (!this.client || !this.isReady) {
+      throw new Error('WhatsApp não está conectado');
+    }
+
+    try {
+      // Acessar a página do Puppeteer através do cliente whatsapp-web.js
+      const clientAny = this.client as any;
+      const page = clientAny.pupPage;
+
+      if (!page) {
+        logger.error('Não foi possível acessar a página do Puppeteer');
+        return [];
+      }
+
+      // Injetar código para acessar diretamente o Store do WhatsApp Web
+      const channels = await page.evaluate(() => {
+        try {
+          // Acessar o objeto Store do WhatsApp Web
+          // @ts-ignore - window está disponível no contexto do browser
+          const win = window as any;
+          const Store = win.Store || win.WWebJS?.Store;
+          
+          if (!Store) {
+            return { error: 'Store não disponível', channels: [] };
+          }
+
+          // Listar todos os Stores disponíveis para debug
+          const availableStores = Object.keys(Store).filter((key: string) => 
+            key.includes('Chat') || 
+            key.includes('Newsletter') || 
+            key.includes('Channel') ||
+            key.includes('Community') ||
+            key.toLowerCase().includes('chat') ||
+            key.toLowerCase().includes('newsletter') ||
+            key.toLowerCase().includes('channel') ||
+            key.toLowerCase().includes('community')
+          );
+
+          if (!Store.Chat) {
+            return { error: 'Store.Chat não disponível', availableStores, channels: [] };
+          }
+
+          const allChats = Store.Chat.getModelsArray();
+          
+          // Coletar todos os tipos de server e propriedades para debug
+          const serverTypes = new Set();
+          const chatSamples: any[] = [];
+          
+          allChats.forEach((chat: any, index: number) => {
+            if (chat.id && chat.id.server) {
+              serverTypes.add(chat.id.server);
+            }
+            
+            // Coletar amostras de chats que possam ser canais ou comunidades
+            if (index < 5 || chat.id?.server === 'newsletter' || chat.isNewsletter || chat.isCommunity) {
+              chatSamples.push({
+                id: chat.id?._serialized,
+                server: chat.id?.server,
+                name: chat.name,
+                isNewsletter: chat.isNewsletter,
+                isCommunity: chat.isCommunity,
+                isParent: chat.isParent,
+                hasNewsletterProps: Object.keys(chat).filter((k: string) => 
+                  k.toLowerCase().includes('newsletter') || 
+                  k.toLowerCase().includes('channel') ||
+                  k.toLowerCase().includes('community')
+                )
+              });
+            }
+          });
+          
+          // Filtrar canais - tentar múltiplos critérios
+          const newsletterChats = allChats.filter((chat: any) => {
+            return (
+              (chat.id && chat.id.server === 'newsletter') ||
+              chat.isNewsletter === true ||
+              chat.type === 'newsletter' ||
+              (chat.id && chat.id._serialized && chat.id._serialized.includes('newsletter'))
+            );
+          });
+
+          return {
+            total: allChats.length,
+            serverTypes: Array.from(serverTypes),
+            availableStores,
+            chatSamples: chatSamples,
+            newsletters: newsletterChats.map((chat: any) => ({
+              id: chat.id._serialized,
+              serverId: chat.id.server,
+              userId: chat.id.user,
+              name: chat.name || chat.contact?.name || chat.formattedTitle || 'Sem nome',
+              description: chat.description || '',
+              unreadCount: chat.unreadCount || 0,
+              timestamp: chat.timestamp || 0,
+              isNewsletter: true,
+            })),
+            error: null
+          };
+        } catch (error: any) {
+          return { error: error.message, channels: [], total: 0 };
+        }
+      });
+
+      if (channels.error) {
+        logger.warn(`Erro ao acessar Store do WhatsApp: ${channels.error}`);
+        if (channels.availableStores) {
+          logger.debug(`Stores disponíveis: ${JSON.stringify(channels.availableStores)}`);
+        }
+        return [];
+      }
+
+      logger.info(`Encontrados ${channels.newsletters?.length || 0} canais via acesso direto ao Store`);
+      logger.debug(`Total de chats no Store: ${channels.total}`);
+      logger.debug(`Tipos de server encontrados: ${JSON.stringify(channels.serverTypes)}`);
+      logger.debug(`Stores disponíveis relacionados: ${JSON.stringify(channels.availableStores)}`);
+      logger.debug(`Amostras de chats (primeiros 5 + especiais): ${JSON.stringify(channels.chatSamples, null, 2)}`);
+      
+      return channels.newsletters || [];
+    } catch (error) {
+      logger.error('Erro ao obter canais via acesso direto:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Método para obter comunidades do WhatsApp
+   * Comunidades são agrupamentos de grupos (WhatsApp Communities)
+   */
+  public async getCommunities(): Promise<any[]> {
+    if (!this.client || !this.isReady) {
+      throw new Error('WhatsApp não está conectado');
+    }
+
+    try {
+      const clientAny = this.client as any;
+      const page = clientAny.pupPage;
+
+      if (!page) {
+        logger.error('Não foi possível acessar a página do Puppeteer');
+        return [];
+      }
+
+      const communities = await page.evaluate(() => {
+        try {
+          // @ts-ignore
+          const win = window as any;
+          const Store = win.Store || win.WWebJS?.Store;
+          
+          if (!Store || !Store.Chat) {
+            return { error: 'Store não disponível', communities: [] };
+          }
+
+          const allChats = Store.Chat.getModelsArray();
+          
+          // Filtrar comunidades - elas têm propriedades específicas
+          const communitiesChats = allChats.filter((chat: any) => {
+            return (
+              chat.isCommunity === true ||
+              chat.isParent === true ||
+              (chat.id && chat.id.server === 'g.us' && chat.groupMetadata?.isCommunity) ||
+              (chat.groupMetadata && chat.groupMetadata.isParent === true)
+            );
+          });
+
+          return {
+            total: allChats.length,
+            communities: communitiesChats.map((chat: any) => ({
+              id: chat.id._serialized,
+              serverId: chat.id.server,
+              name: chat.name || chat.formattedTitle || 'Comunidade sem nome',
+              description: chat.description || '',
+              unreadCount: chat.unreadCount || 0,
+              timestamp: chat.timestamp || 0,
+              isCommunity: true,
+              isParent: chat.isParent || false,
+              subgroupsCount: chat.groupMetadata?.subgroups?.length || 0,
+            })),
+            error: null
+          };
+        } catch (error: any) {
+          return { error: error.message, communities: [], total: 0 };
+        }
+      });
+
+      if (communities.error) {
+        logger.warn(`Erro ao acessar comunidades: ${communities.error}`);
+        return [];
+      }
+
+      logger.info(`Encontradas ${communities.communities?.length || 0} comunidades`);
+      
+      return communities.communities || [];
+    } catch (error) {
+      logger.error('Erro ao obter comunidades:', error);
+      return [];
     }
   }
 

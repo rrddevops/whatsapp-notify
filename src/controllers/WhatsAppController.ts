@@ -209,6 +209,175 @@ export class WhatsAppController {
     }
   }
 
+  public async getChannels(req: Request, res: Response): Promise<void> {
+    try {
+      if (!this.whatsappService.isConnected()) {
+        res.status(503).json({
+          success: false,
+          error: 'WhatsApp não está conectado',
+        });
+        return;
+      }
+
+      const channels = await this.whatsappService.getChannels();
+
+      res.json({
+        success: true,
+        data: channels,
+        count: channels.length,
+      });
+    } catch (error: any) {
+      logger.error('Erro ao obter canais:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erro ao obter canais',
+        message: error.message,
+      });
+    }
+  }
+
+  public async getCommunities(req: Request, res: Response): Promise<void> {
+    try {
+      if (!this.whatsappService.isConnected()) {
+        res.status(503).json({
+          success: false,
+          error: 'WhatsApp não está conectado',
+        });
+        return;
+      }
+
+      const communities = await this.whatsappService.getCommunities();
+
+      res.json({
+        success: true,
+        data: communities,
+        count: communities.length,
+      });
+    } catch (error: any) {
+      logger.error('Erro ao obter comunidades:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erro ao obter comunidades',
+        message: error.message,
+      });
+    }
+  }
+
+  public async getAllChatsDebug(req: Request, res: Response): Promise<void> {
+    try {
+      if (!this.whatsappService.isConnected()) {
+        res.status(503).json({
+          success: false,
+          error: 'WhatsApp não está conectado',
+        });
+        return;
+      }
+
+      const client = this.whatsappService.getClient();
+      if (!client) {
+        res.status(503).json({
+          success: false,
+          error: 'Cliente WhatsApp não disponível',
+        });
+        return;
+      }
+
+      const chats = await client.getChats();
+      const allChatsInfo = chats.map(chat => {
+        const chatAny = chat as any;
+        const id = chat.id._serialized;
+        
+        // Identificar canais através do ID
+        // Canais do WhatsApp geralmente têm IDs específicos
+        const isLikelyChannel = 
+          id.includes('newsletter') || 
+          (id.includes('@') && id.split('@')[1] === 'newsletter') ||
+          (chatAny.isReadOnly === true && !chat.isGroup && id !== 'status@broadcast' && id !== '0@c.us');
+        
+        return {
+          id: id,
+          name: chat.name || 'Sem nome',
+          isGroup: chat.isGroup,
+          isBroadcast: chatAny.isBroadcast,
+          isChannel: chatAny.isChannel,
+          kind: chatAny.kind,
+          isReadOnly: chatAny.isReadOnly,
+          isLikelyChannel: isLikelyChannel,
+          idServer: chat.id.server,
+          idUser: chat.id.user,
+          unreadCount: chatAny.unreadCount || 0,
+          properties: Object.keys(chatAny).filter(key => 
+            key.includes('channel') || 
+            key.includes('Channel') || 
+            key.includes('broadcast') || 
+            key.includes('Broadcast') ||
+            key.includes('newsletter') ||
+            key.includes('Newsletter')
+          ),
+          allKeys: Object.keys(chatAny).slice(0, 30), // Primeiras 30 propriedades
+        };
+      });
+
+      // Filtrar possíveis canais
+      const possibleChannels = allChatsInfo.filter(chat => chat.isLikelyChannel);
+
+      res.json({
+        success: true,
+        total: chats.length,
+        groups: chats.filter(c => c.isGroup).length,
+        nonGroups: chats.filter(c => !c.isGroup).length,
+        possibleChannels: possibleChannels.length,
+        data: allChatsInfo,
+        channelsData: possibleChannels,
+      });
+    } catch (error: any) {
+      logger.error('Erro ao obter todos os chats:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erro ao obter chats',
+        message: error.message,
+      });
+    }
+  }
+
+  public async getChannelFromLink(req: Request, res: Response): Promise<void> {
+    try {
+      const { channelLink } = req.query;
+
+      if (!channelLink || typeof channelLink !== 'string') {
+        res.status(400).json({
+          success: false,
+          error: 'Link do canal é obrigatório',
+          message: 'Envie o link no formato: ?channelLink=https://whatsapp.com/channel/CODIGO',
+        });
+        return;
+      }
+
+      if (!this.whatsappService.isConnected()) {
+        res.status(503).json({
+          success: false,
+          error: 'WhatsApp não está conectado',
+        });
+        return;
+      }
+
+      const channelInfo = await this.whatsappService.getChannelInfoFromLink(channelLink);
+
+      res.json({
+        success: true,
+        data: channelInfo,
+        message: 'Informações do canal obtidas com sucesso',
+      });
+    } catch (error: any) {
+      logger.error('Erro ao obter canal do link:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erro ao obter informações do canal',
+        message: error.message,
+      });
+    }
+  }
+
   public async getGroupFromInviteLink(req: Request, res: Response): Promise<void> {
     try {
       const { inviteLink } = req.query;
